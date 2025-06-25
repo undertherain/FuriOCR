@@ -1,0 +1,2 @@
+# FuriOCR
+Furigana OCR
