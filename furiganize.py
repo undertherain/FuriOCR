@@ -5,9 +5,11 @@
 
 import logging
 import os
+import random
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 enc = "utf-8"
 isWin = False
@@ -326,33 +328,36 @@ def ProcessPhrase(expr):
     return out
 
 
-# Tests
-##########################################################################
+def flip_coin(p=0.5):
+    if random.random() < p:
+        return True
+    return False
 
 
 def convert_string(s):
     fin = ""
-    tokens = processSentence(expr)
+    tokens = processSentence(s)
     for token in tokens:
-        fin = fin + token.kanji
-        if token.reading is not None:
-            fin = fin + "[" + token.reading + "]"
+        if token.reading is not None and flip_coin():
+            fin = fin + f"[{token.kanji}]{{{token.reading}}}"
+        else:
+            fin = fin + token.kanji
     return fin
 
 
 if __name__ == "__main__":
     samples = []
     # samples.append("手紙")
-    # samples.append("手紙.")
-    # samples.append("手紙。")
-    # samples.append("カリン、 千葉 千葉 千 彼二千三百六十円も使った。回転寿司.")
-    samples.append("私は日本人です")
-    # samples.append("水田がある.水をのむ.")
-
-    for expr in samples:
-        print("-------------------")
-        print("parsing expression:", expr)
-        print("kakasi returned:", kakasi.reading(expr))
-        print(convert_string(expr))
-
-g_exportedScripts = (Furiganize,)
+    samples.append("このご飯は美味しいです。")
+    for path_in in Path("./inputs").iterdir():
+        print("## processing", path_in)
+        path_out = Path("furiganized") / path_in.with_suffix(".md").name
+        with open(path_in) as f_in:
+            text = f_in.read()
+        with open(path_out, "w") as f_out:
+            # print("-------------------")
+            print("parsing expression:", text)
+            # print("kakasi returned:", kakasi.reading(expr))
+            res = convert_string(text)
+            # print()
+            f_out.write(res)
