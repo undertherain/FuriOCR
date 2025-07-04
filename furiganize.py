@@ -32,6 +32,12 @@ kakasiArgs = ["-isjis", "-osjis", "-u", "-JH", "-KH"]
 mecabArgs = ["--node-format=%m[%f[7]] ", "--eos-format=\n", "--unk-format=%m[] "]
 
 
+def flip_coin(p=0.5):
+    if random.random() < p:
+        return True
+    return False
+
+
 class Token:
 
     def __init__(self, _kanji, _reading):
@@ -258,6 +264,10 @@ def SplitKanji(token):
             result.append(Token(token.kanji[i], token.reading[i]))
         return result
     readings = kakasi_multiple.reading(token.kanji[0])
+    if not readings:
+        return [token]
+    if flip_coin():
+        return [Token(token.kanji, "")]
     if readings[0] == "{":
         readings = readings[1:-1]
     readings = readings.split("|")
@@ -272,19 +282,20 @@ def SplitKanji(token):
 
 
 def processSentence(expr):
-    phrases = expr.split(" ")
+    phrases = expr.split("。")
     result = []
     for phrase in phrases:
-        result = result + ProcessPhrase(phrase)
+        result = result + ProcessPhrase(phrase + "。")
         result.append(Token(" ", None))
     return result[:-1]
 
 
 def ProcessPhrase(expr):
-    original = expr
+    # original = expr
+    print("processing expr ", expr)
     expr = mecab.GetReadingRaw(expr)
     out = []
-    print("mecab returned:", expr)
+    # print("mecab returned:", expr)
     for node in expr.split(" "):
         if not node:
             break
@@ -328,17 +339,11 @@ def ProcessPhrase(expr):
     return out
 
 
-def flip_coin(p=0.5):
-    if random.random() < p:
-        return True
-    return False
-
-
 def convert_string(s):
     fin = ""
     tokens = processSentence(s)
     for token in tokens:
-        if token.reading is not None and flip_coin():
+        if token.kanji and token.kanji[0] not in "0123456789" and token.reading:
             fin = fin + f"[{token.kanji}]{{{token.reading}}}"
         else:
             fin = fin + token.kanji
