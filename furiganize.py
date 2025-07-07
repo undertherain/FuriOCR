@@ -31,6 +31,9 @@ kakasiArgsMultiple = ["-isjis", "-osjis", "-u", "-JH", "-KH", "-p"]
 kakasiArgs = ["-isjis", "-osjis", "-u", "-JH", "-KH"]
 mecabArgs = ["--node-format=%m[%f[7]] ", "--eos-format=\n", "--unk-format=%m[] "]
 
+cnt_chars_processed = 0
+max_characters = 3000
+
 
 def flip_coin(p=0.5):
     if random.random() < p:
@@ -284,7 +287,14 @@ def SplitKanji(token):
 def processSentence(expr):
     phrases = expr.split("。")
     result = []
+    global cnt_chars_processed
     for phrase in phrases:
+        phrase = phrase.strip()
+        if len(phrase) < 2:
+            continue
+        cnt_chars_processed += len(phrase)
+        if cnt_chars_processed > max_characters:
+            break
         result = result + ProcessPhrase(phrase + "。")
         result.append(Token(" ", None))
     return result[:-1]
@@ -355,6 +365,7 @@ if __name__ == "__main__":
     # samples.append("手紙")
     samples.append("このご飯は美味しいです。")
     for path_in in Path("./inputs").iterdir():
+        cnt_chars_processed = 0
         print("## processing", path_in)
         path_out = Path("furiganized") / path_in.with_suffix(".md").name
         with open(path_in) as f_in:
