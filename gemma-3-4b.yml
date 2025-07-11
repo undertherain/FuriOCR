@@ -15,7 +15,7 @@ chat_template: gemma3
 eot_tokens:
   - <end_of_turn>
 datasets:
-  - path: my.jsonl
+  - path: dummy.jsonl
     type: chat
     # split: train[:1%]
     field_messages: messages
