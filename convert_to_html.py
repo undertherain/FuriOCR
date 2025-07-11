@@ -60,6 +60,7 @@ def convert_furigana_to_html(path_in, path_out, template_path):
 if __name__ == "__main__":
 
     # md_file = "input.md"
+    Path("htmls").mkdir(exist_ok=True)
     template_file = "template.html"
     for path_in in Path("./furiganized").iterdir():
         print("## processing", path_in)

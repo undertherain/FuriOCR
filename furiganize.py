@@ -302,7 +302,7 @@ def processSentence(expr):
 
 def ProcessPhrase(expr):
     # original = expr
-    print("processing expr ", expr)
+    # print("parsing expr", expr)
     expr = mecab.GetReadingRaw(expr)
     out = []
     # print("mecab returned:", expr)
@@ -366,13 +366,13 @@ if __name__ == "__main__":
     samples.append("このご飯は美味しいです。")
     for path_in in Path("./inputs").iterdir():
         cnt_chars_processed = 0
-        print("## processing", path_in)
+        print("\n## processing file", path_in)
         path_out = Path("furiganized") / path_in.with_suffix(".md").name
         with open(path_in) as f_in:
             text = f_in.read()
         with open(path_out, "w") as f_out:
-            # print("-------------------")
             print("parsing expression:", text)
+            print("-------------------")
             # print("kakasi returned:", kakasi.reading(expr))
             res = convert_string(text)
             # print()
