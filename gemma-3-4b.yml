@@ -1,7 +1,8 @@
 base_model: google/gemma-3-4b-it
+model_type: paligemma  # or appropriate multimodal type
 processor_type: AutoProcessor
 
-load_in_4bit: true
+load_in_4bit: false
 
 # these 3 lines are needed for now to handle vision chat templates w images
 skip_prepare_dataset: true
@@ -23,16 +24,16 @@ dataset_prepared_path: last_run_prepared
 #val_set_size: 0.01
 output_dir: ./outputs/out
 
-adapter: qlora
-lora_model_dir:
+#adapter: qlora
+#lora_model_dir:
 
 sequence_len: 2048
 pad_to_sequence_len: false
 
-lora_r: 32
-lora_alpha: 16
-lora_dropout: 0.05
-lora_target_modules: 'model.language_model.layers.[\d]+.(mlp|cross_attn|self_attn).(up|down|gate|q|k|v|o)_proj'
+#lora_r: 32
+#lora_alpha: 16
+#lora_dropout: 0.05
+#lora_target_modules: 'model.language_model.layers.[\d]+.(mlp|cross_attn|self_attn).(up|down|gate|q|k|v|o)_proj'
 
 wandb_project:
 wandb_entity:
