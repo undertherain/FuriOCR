@@ -5,42 +5,37 @@ from datasets import Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 
 
-def main():
+def create_simplified_finetuning_demo():
     """
-    Creates and runs a simplified demo of fine-tuning a Gemma model.
-    Data is prepared manually in a for loop without using map or a data collator.
+    Debugs fine-tuning by using a very small model (smollm) and simplified
+    text formatting to avoid potential chat template issues.
     """
-    # 1. Define Model and your conversations (Model updated)
-    model_id = "google/gemma-3-4b-it"
+    # 1. Define Model (Switched to a much smaller model for debugging)
+    model_id = "google/gemma-3-4b-it"  # Commented out for now
+    # model_id = "HuggingFaceTB/SmolLM2-135M-Instruct"
 
-    # Note: Fine-tuning a 4B parameter model on a CPU will be extremely slow
-    # and require a significant amount of RAM (likely 16GB+).
+    # The input format is simplified to a plain string
+    conversations = [{"user": "What is the Capital of France?", "assistant": "Paris"}]
 
-    conversations = [
-        [
-            {"role": "user", "content": "What is the Capital of France?"},
-            {"role": "model", "content": "Paris"},
-        ]
-    ]
-
-    # 2. Load Tokenizer and set the chat template
+    # 2. Load Tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    chat_template = """{% for message in messages %}{% if message['role'] == 'user' %}{{ '<start_of_turn>user\n' + message['content'] + '<end_of_turn>\n' }}{% elif message['role'] == 'model' %}{{ '<start_of_turn>model\n' + message['content'] + '<end_of_turn>\n' }}{% endif %}{% endfor %}"""
-    tokenizer.chat_template = chat_template
     if tokenizer.pad_token is None:
         tokenizer.add_special_tokens({"pad_token": "[PAD]"})
 
-    # 3. Manually prepare the data in a for loop
+    # 3. Manually prepare data with simplified string formatting
     processed_data = []
-    for chat in conversations:
-        formatted_chat = tokenizer.apply_chat_template(
-            chat, tokenize=False, add_generation_prompt=False
-        )
+    for i in range(128):
+        # for chat in conversations:
+        # We now create a simple string instead of using a complex chat template.
+        # This is a more robust way to format input for debugging.
+        chat = conversations[0]
+        text = f"User: {chat['user']}\nAssistant: {chat['assistant']}"
+
         tokenized_output = tokenizer(
-            formatted_chat,
+            text,
             truncation=True,
             padding="max_length",
-            max_length=512,
+            max_length=128,  # Reduced max_length for the smaller model
         )
         processed_data.append(
             {
@@ -57,16 +52,18 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float32)
     model.resize_token_embeddings(len(tokenizer))
 
-    # 6. Configure Training (Arguments updated)
-    output_dir = Path("./gemma-finetuned-simplified")
+    # 6. Configure Training (Keeping stability settings)
+    output_dir = Path("./smollm-finetuned-simplified")
     training_arguments = TrainingArguments(
         output_dir=str(output_dir),
-        per_device_train_batch_size=1,
+        per_device_train_batch_size=2,
+        gradient_accumulation_steps=16,
         num_train_epochs=1,
-        learning_rate=2e-5,  # Lower learning rate added
+        learning_rate=5e-7,
+        max_grad_norm=0.1,
         logging_dir=str(output_dir / "logs"),
         logging_steps=1,
-        use_cpu=True,  # Replaced 'no_cuda'
+        use_cpu=True,
         report_to="none",
     )
 
@@ -78,7 +75,7 @@ def main():
     )
 
     # 8. Start Fine-tuning
-    print(f"Starting fine-tuning for model '{model_id}' on the CPU...")
+    print(f"Starting fine-tuning for small model '{model_id}' to debug...")
     trainer.train()
     print("Fine-tuning complete.")
 
@@ -89,4 +86,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    create_simplified_finetuning_demo()
