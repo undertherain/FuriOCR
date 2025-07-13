@@ -76,6 +76,7 @@ def main():
     processor = get_chat_template(processor, "gemma-3")
 
     model = FastVisionModel.for_training(model)
+    print("model set for training!")
 
     trainer = SFTTrainer(
         model=model,
@@ -110,8 +111,8 @@ def main():
             max_seq_length=2048,
         ),
     )
-    print("just in case check trainable params again:")
-    print(trainer.model.print_trainable_parameters())
+    # print("just in case check trainable params again:")
+    # print(trainer.model.print_trainable_parameters())
     trainer_stats = trainer.train()
     print(trainer_stats)
 
