@@ -99,7 +99,7 @@ def main():
             max_grad_norm=0.3,  # max gradient norm based on QLoRA paper
             warmup_ratio=0.03,
             max_steps=30,
-            fp16=True,  # Use mixed precision
+            fp16=False,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
             learning_rate=2e-6,
             logging_steps=1,
