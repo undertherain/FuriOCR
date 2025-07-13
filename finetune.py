@@ -1,4 +1,5 @@
 import gc
+import os
 from pathlib import Path
 
 import torch
@@ -9,6 +10,8 @@ from trl import SFTConfig, SFTTrainer
 from unsloth import FastVisionModel  # FastLanguageModel for LLMs
 from unsloth import get_chat_template
 from unsloth.trainer import UnslothVisionDataCollator
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def create_conversation():
