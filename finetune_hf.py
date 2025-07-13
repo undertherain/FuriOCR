@@ -5,7 +5,7 @@ from datasets import Dataset
 from PIL import Image
 from transformers import (
     AutoProcessor,
-    GemmaForConditionalGeneration,
+    Gemma3ForConditionalGeneration,
     Trainer,
     TrainingArguments,
 )
