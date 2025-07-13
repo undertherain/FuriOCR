@@ -27,7 +27,7 @@ def create_conversation():
         "role": "assistant",
         "content": [{"type": "text", "text": "cat"}],
     }
-    conversation = {"messages": [user_message, assistant_message]}
+    conversation = [user_message, assistant_message]
     return conversation
 
 
