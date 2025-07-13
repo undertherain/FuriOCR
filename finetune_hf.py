@@ -21,6 +21,37 @@ from transformers import (
 #         img.save("cat.jpg")
 
 
+# 4. Preprocess the dataset
+def preprocess_function(examples):
+    # 1. Create the chat template for text
+    chats = [
+        [
+            {"role": "user", "content": [f"<image>\n{p}"]},
+            {"role": "assistant", "content": a},
+        ]
+        for p, a in zip(examples["prompt"], examples["answer"])
+    ]
+
+    # 2. Apply the chat template and tokenize text
+    inputs = processor.tokenizer.apply_chat_template(
+        chats,
+        tokenize=True,
+        add_generation_prompt=False,
+        padding="max_length",
+        max_length=2048,
+        return_tensors="pt",
+    )
+
+    # 3. Process images separately using the image_processor
+    raw_images = [img.convert("RGB") for img in examples["image"]]
+    image_inputs = processor.image_processor(images=raw_images, return_tensors="pt")
+
+    # 4. Combine text and image inputs
+    inputs["pixel_values"] = image_inputs.pixel_values
+
+    return inputs
+
+
 def main():
     # 1. Create a dummy image
     # create_dummy_cat_image()
@@ -31,54 +62,54 @@ def main():
     prompt = "what is the main item in the image"
     assistant_reply = "cat"
 
-    # Replicate the sample 100 times
-    dataset_data = [
-        {"prompt": prompt, "image": image.copy(), "answer": assistant_reply}
-        for _ in range(100)
-    ]
+    # # Replicate the sample 100 times
+    # dataset_data = [
+    #     {"prompt": prompt, "image": image.copy(), "answer": assistant_reply}
+    #     for _ in range(100)
+    # ]
 
-    # Create a Hugging Face Dataset
-    dummy_dataset = Dataset.from_list(dataset_data)
+    # # Create a Hugging Face Dataset
+    # dummy_dataset = Dataset.from_list(dataset_data)
 
     # 3. Load model and processor
     model_id = "google/gemma-3-4b-it"
     processor = AutoProcessor.from_pretrained(model_id)
+    image = Image.open("cat.jpg").convert("RGB")
+    image_inputs = processor.image_processor(images=image, return_tensors="pt")
+    pixel_values = image_inputs.pixel_values
+
+    # Create the conversational chat structure
+    chat = [
+        {"role": "user", "content": [f"<image>\n{prompt}"]},
+        {"role": "assistant", "content": assistant_reply},
+    ]
+
+    # Tokenize the text using the tokenizer
+    # The model will use the full `input_ids` as labels, automatically masking the user prompt parts during loss calculation.
+    text_inputs = processor.tokenizer.apply_chat_template(
+        chat, tokenize=True, add_generation_prompt=False, return_tensors="pt"
+    )
+
+    # 4. Create the Full Dataset with a simple 'for' loop
+    print("Creating dataset with a loop...")
+    processed_data_list = []
+    for _ in range(100):
+        # We append a dictionary with all the necessary keys for the model
+        processed_data_list.append(
+            {
+                "pixel_values": pixel_values.clone(),
+                "input_ids": text_inputs.clone(),
+            }
+        )
+
+    # processed_dataset = dummy_dataset.map(preprocess_function, batched=True)
+    print("DataSet preprocessed")
+    return
     model = Gemma3ForConditionalGeneration.from_pretrained(
         model_id,
         torch_dtype=torch.float32,  # Use float32 for CPU
     )
     print("Model loaded!")
-    # 4. Preprocess the dataset
-    def preprocess_function(examples):
-        # Create the chat template
-        chats = [
-            [
-                {"role": "user", "content": [f"<image>\n{p}"]},
-                {"role": "assistant", "content": a},
-            ]
-            for p, a in zip(examples["prompt"], examples["answer"])
-        ]
-
-        # Apply the chat template and tokenize
-        inputs = processor.tokenizer.apply_chat_template(
-            chats,
-            tokenize=True,
-            add_generation_prompt=False,
-            padding="max_length",
-            max_length=2048,
-            return_tensors="pt",
-        )
-
-        # Preprocess the images
-        raw_images = [img.convert("RGB") for img in examples["image"]]
-        image_inputs = processor(images=raw_images, return_tensors="pt")
-
-        inputs["pixel_values"] = image_inputs.pixel_values
-
-        return inputs
-
-    processed_dataset = dummy_dataset.map(preprocess_function, batched=True)
-    print("DataSet preprocessed")
     # 5. Configure Training Arguments for CPU
     training_args = TrainingArguments(
         output_dir="./gemma-4b-multimodal-finetuned",
