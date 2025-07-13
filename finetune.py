@@ -2,6 +2,7 @@ from email import message
 from pathlib import Path
 
 import unsloth
+import torch
 from datasets import load_dataset
 from PIL import Image
 from trl import SFTConfig, SFTTrainer
@@ -72,7 +73,7 @@ def main():
 
     processor = get_chat_template(processor, "gemma-3")
 
-    model = FastLanguageModel.for_training(model)
+    model = FastVisionModel.for_training(model)
 
     trainer = SFTTrainer(
         model=model,
