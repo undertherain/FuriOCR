@@ -7,21 +7,20 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingA
 
 def main():
     """
-    Fine-tuning a Gemma model.
+    Creates and runs a simplified demo of fine-tuning a Gemma model.
     Data is prepared manually in a for loop without using map or a data collator.
     """
-    # 1. Define Model and your conversations
+    # 1. Define Model and your conversations (Model updated)
     model_id = "google/gemma-3-4b-it"
+
+    # Note: Fine-tuning a 4B parameter model on a CPU will be extremely slow
+    # and require a significant amount of RAM (likely 16GB+).
+
     conversations = [
         [
             {"role": "user", "content": "What is the Capital of France?"},
             {"role": "model", "content": "Paris"},
-        ],
-        # You can add more conversations here
-        # [
-        #     {"role": "user", "content": "What is 2 + 2?"},
-        #     {"role": "model", "content": "4"}
-        # ]
+        ]
     ]
 
     # 2. Load Tokenizer and set the chat template
@@ -34,20 +33,15 @@ def main():
     # 3. Manually prepare the data in a for loop
     processed_data = []
     for chat in conversations:
-        # Format the conversation into a single string
         formatted_chat = tokenizer.apply_chat_template(
             chat, tokenize=False, add_generation_prompt=False
         )
-
-        # Tokenize the string
         tokenized_output = tokenizer(
             formatted_chat,
             truncation=True,
             padding="max_length",
             max_length=512,
         )
-
-        # The 'labels' are the same as 'input_ids' for language modeling
         processed_data.append(
             {
                 "input_ids": tokenized_output["input_ids"],
@@ -60,24 +54,23 @@ def main():
     final_dataset = Dataset.from_list(processed_data)
 
     # 5. Load Model
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id, torch_dtype=torch.float32
-    )  # Use float32 for CPU
+    model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float32)
     model.resize_token_embeddings(len(tokenizer))
 
-    # 6. Configure Training
+    # 6. Configure Training (Arguments updated)
     output_dir = Path("./gemma-finetuned-simplified")
     training_arguments = TrainingArguments(
         output_dir=str(output_dir),
-        per_device_train_batch_size=1,  # Batch size of 1 as requested
+        per_device_train_batch_size=1,
         num_train_epochs=1,
+        learning_rate=2e-5,  # Lower learning rate added
         logging_dir=str(output_dir / "logs"),
         logging_steps=1,
-        use_cpu=True,  # Ensure CPU is used
-        report_to="none",  # Disables online logging integrations like wandb
+        use_cpu=True,  # Replaced 'no_cuda'
+        report_to="none",
     )
 
-    # 7. Initialize Trainer (no data collator needed)
+    # 7. Initialize Trainer
     trainer = Trainer(
         model=model,
         args=training_arguments,
@@ -85,7 +78,7 @@ def main():
     )
 
     # 8. Start Fine-tuning
-    print("Starting the simplified fine-tuning process on the CPU...")
+    print(f"Starting fine-tuning for model '{model_id}' on the CPU...")
     trainer.train()
     print("Fine-tuning complete.")
 
