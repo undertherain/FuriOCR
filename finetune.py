@@ -63,8 +63,11 @@ def main():
     print(converted_dataset[0])
 
     # return
+    # model_name = "unsloth/Meta-Llama-3.1-8B-bnb-4bit"
+    # model_name = "unsloth/gemma-3-4b-pt"
+    model_name = "unsloth/Llama-3.2-1B-Instruct"
     model, processor = FastVisionModel.from_pretrained(
-        "unsloth/gemma-3-4b-pt",
+        model_name=model_name,
         dtype=torch.float16,  # Use float16 for memory efficiency
         load_in_4bit=False,  # Use 4bit to reduce memory use. False for 16bit LoRA.
         load_in_8bit=False,
