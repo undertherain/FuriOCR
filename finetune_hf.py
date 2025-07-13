@@ -43,11 +43,11 @@ def main():
     # 3. Load model and processor
     model_id = "google/gemma-3-4b-it"
     processor = AutoProcessor.from_pretrained(model_id)
-    model = GemmaForConditionalGeneration.from_pretrained(
+    model = Gemma3ForConditionalGeneration.from_pretrained(
         model_id,
         torch_dtype=torch.float32,  # Use float32 for CPU
     )
-
+    print("Model loaded!")
     # 4. Preprocess the dataset
     def preprocess_function(examples):
         # Create the chat template
@@ -78,7 +78,7 @@ def main():
         return inputs
 
     processed_dataset = dummy_dataset.map(preprocess_function, batched=True)
-
+    print("DataSet preprocessed")
     # 5. Configure Training Arguments for CPU
     training_args = TrainingArguments(
         output_dir="./gemma-4b-multimodal-finetuned",
