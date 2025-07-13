@@ -71,7 +71,7 @@ def main():
     # model_name = "unsloth/Llama-3.2-1B-Instruct"
     model, processor = FastVisionModel.from_pretrained(
         model_name=model_name,
-        dtype=torch.float16,  # Use float16 for memory efficiency
+        dtype=torch.float32,  # Use float16 for memory efficiency
         load_in_4bit=False,  # Use 4bit to reduce memory use. False for 16bit LoRA.
         load_in_8bit=False,
         full_finetuning=True,
