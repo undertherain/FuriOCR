@@ -62,15 +62,17 @@ def main():
     # return
     model, processor = FastVisionModel.from_pretrained(
         "unsloth/gemma-3-4b-pt",
+        dtype=torch.float16,  # Use float16 for memory efficiency
         load_in_4bit=False,  # Use 4bit to reduce memory use. False for 16bit LoRA.
-        use_gradient_checkpointing="unsloth",  # True or "unsloth" for long context
+        load_in_8bit=False,
+        # use_gradient_checkpointing="unsloth",  # True or "unsloth" for long context
         # r=16,  # Add LoRA rank
         # lora_alpha=32,  # Add LoRA alpha
     )
 
     processor = get_chat_template(processor, "gemma-3")
 
-    # FastVisionModel.for_training(model)  # Enable for training!
+    model = FastLanguageModel.for_training(model)
 
     trainer = SFTTrainer(
         model=model,
@@ -86,6 +88,7 @@ def main():
             max_grad_norm=0.3,  # max gradient norm based on QLoRA paper
             warmup_ratio=0.03,
             max_steps=30,
+            fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
             learning_rate=2e-4,
             logging_steps=1,
