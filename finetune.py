@@ -59,7 +59,7 @@ def main():
 
     print(converted_dataset[0])
 
-    return
+    # return
     model, processor = FastVisionModel.from_pretrained(
         "unsloth/gemma-3-4b-pt",
         load_in_4bit=False,  # Use 4bit to reduce memory use. False for 16bit LoRA.
