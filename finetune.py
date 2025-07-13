@@ -1,7 +1,7 @@
 from email import message
 from pathlib import Path
 
-import torch
+import unsloth
 from datasets import load_dataset
 from PIL import Image
 from trl import SFTConfig, SFTTrainer
@@ -9,14 +9,15 @@ from unsloth import FastVisionModel  # FastLanguageModel for LLMs
 from unsloth import get_chat_template
 from unsloth.trainer import UnslothVisionDataCollator
 
-# dataset = load_dataset("unsloth/LaTeX_OCR", split="train")
-
 
 def create_conversation():
     user_message = {
         "role": "user",
         "content": [
-            {"type": "image", "path": Image.open("./cat.jpg")},
+            {
+                "type": "image",
+                "image": Image.open("./cat.jpg"),
+            },
             {
                 "type": "text",
                 "text": "Recognize the main object in this image. Respond with one word.",
@@ -27,12 +28,13 @@ def create_conversation():
         "role": "assistant",
         "content": [{"type": "text", "text": "cat"}],
     }
-    conversation = [user_message, assistant_message]
+    conversation = {"messages": [user_message, assistant_message]}
     return conversation
 
 
 def main():
     instruction = "Write the LaTeX representation for this image."
+    # dataset = load_dataset("unsloth/LaTeX_OCR", split="train")
 
     # def convert_to_conversation(sample):
     #     conversation = [
@@ -43,7 +45,10 @@ def main():
     #                 {"type": "image", "image": sample["image"]},
     #             ],
     #         },
-    #         {"role": "assistant", "content": [{"type": "text", "text": sample["text"]}]},
+    #         {
+    #             "role": "assistant",
+    #             "content": [{"type": "text", "text": sample["text"]}],
+    #         },
     #     ]
     #     return {"messages": conversation}
 
@@ -54,7 +59,7 @@ def main():
 
     print(converted_dataset[0])
 
-    # return
+    return
     model, processor = FastVisionModel.from_pretrained(
         "unsloth/gemma-3-4b-pt",
         load_in_4bit=False,  # Use 4bit to reduce memory use. False for 16bit LoRA.
