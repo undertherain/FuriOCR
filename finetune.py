@@ -1,8 +1,8 @@
-from email import message
+import gc
 from pathlib import Path
 
-import unsloth
 import torch
+import unsloth
 from datasets import load_dataset
 from PIL import Image
 from trl import SFTConfig, SFTTrainer
@@ -34,7 +34,9 @@ def create_conversation():
 
 
 def main():
-    instruction = "Write the LaTeX representation for this image."
+    torch.cuda.empty_cache()
+    gc.collect()
+    # instruction = "Write the LaTeX representation for this image."
     # dataset = load_dataset("unsloth/LaTeX_OCR", split="train")
 
     # def convert_to_conversation(sample):
@@ -70,7 +72,7 @@ def main():
         # r=16,  # Add LoRA rank
         # lora_alpha=32,  # Add LoRA alpha
     )
-
+    print("model loaded!")
     processor = get_chat_template(processor, "gemma-3")
 
     model = FastVisionModel.for_training(model)
@@ -91,7 +93,7 @@ def main():
             max_steps=30,
             fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
-            learning_rate=2e-4,
+            learning_rate=2e-6,
             logging_steps=1,
             save_strategy="steps",
             save_safetensors=False,
@@ -108,6 +110,8 @@ def main():
             max_seq_length=2048,
         ),
     )
+    print("just in case check trainable params again:")
+    print(trainer.model.print_trainable_parameters())
     trainer_stats = trainer.train()
     print(trainer_stats)
 
