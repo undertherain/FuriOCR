@@ -13,10 +13,11 @@ load_dotenv()
 client = OpenAI(
     # api_key=os.environ.get("OPENAI_API_KEY"),
     # base_url="http://127.0.0.1:2600/v1",
-    # base_url="http://ai-a100-01.r-ccs27.riken.jp:11434/v1",
+    base_url="http://ai-a100-01.r-ccs27.riken.jp:11434/v1",
 )
-MODEL = "gpt-4.1"  # Or another suitable multimodal model
-# MODEL = "gemma3:4b"
+# MODEL = "gpt-4.1"  # Or another suitable multimodal model
+MODEL = "gemma3:4b"
+# MODEL = "furi"
 
 
 def encode_image(image_path):
@@ -36,36 +37,34 @@ def recognize_japanese_text_with_furigana(image_path):
       The recognized text in Markdown format with furigana, or an error message.
     """
     if not os.path.exists(image_path):
-        return "Error: Image file not found at the specified path."
+        raise RuntimeError("Error: Image file not found at the specified path.")
 
     base64_image = encode_image(image_path)
     print("len image:", len(base64_image))
 
-    try:
-        response = client.chat.completions.create(
-            model=MODEL,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text.\n",
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{base64_image}"
-                            },
-                        },
-                    ],
-                }
-            ],
-            max_tokens=4096,
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"An error occurred: {e}"
+    # try:
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text.\n",
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{base64_image}"},
+                    },
+                ],
+            }
+        ],
+        max_tokens=4096,
+    )
+    return response.choices[0].message.content
+    # except Exception as e:
+    #   return f"An error occurred: {e}"
 
 
 if __name__ == "__main__":

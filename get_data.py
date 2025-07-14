@@ -43,7 +43,7 @@ def download_fineweb_subset(num_entries=100):
             print(f"URL: {entry.get('url', 'N/A')}")
             print(f"Dump: {entry.get('dump', 'N/A')}")
             # The text content can be quite long, so we'll print a snippet.
-            text_snippet = entry.get("text", "")[:500]
+            text_snippet = entry.get("text", "")[:1000]
             print(f"Text (first 500 chars): {text_snippet}...")
             with open(Path("inputs") / entry_id[10:-1], "w") as f:
                 f.write(entry.get("text", ""))
@@ -61,4 +61,4 @@ def download_fineweb_subset(num_entries=100):
 
 if __name__ == "__main__":
     Path("inputs").mkdir(exist_ok=True)
-    download_fineweb_subset(210)
+    download_fineweb_subset(1010)
