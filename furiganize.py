@@ -361,6 +361,7 @@ def convert_string(s):
 
 
 if __name__ == "__main__":
+    Path("furiganized").mkdir(exist_ok=True)
     samples = []
     # samples.append("手紙")
     samples.append("このご飯は美味しいです。")
