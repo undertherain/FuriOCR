@@ -71,10 +71,11 @@ def main():
     # model_name = "unsloth/Llama-3.2-1B-Instruct"
     model, processor = FastVisionModel.from_pretrained(
         model_name=model_name,
-        dtype=torch.float32,  # Use float16 for memory efficiency
+        dtype=torch.float16,  # Use float16 for memory efficiency
         load_in_4bit=False,  # Use 4bit to reduce memory use. False for 16bit LoRA.
-        load_in_8bit=False,
-        full_finetuning=True,
+        load_in_8bit=True,
+        # full_finetuning=True,
+        use_gradient_checkpointing="unsloth",
         # use_gradient_checkpointing="unsloth",  # True or "unsloth" for long context
         # r=16,  # Add LoRA rank
         # lora_alpha=32,  # Add LoRA alpha
@@ -82,7 +83,26 @@ def main():
     print("model loaded!")
     processor = get_chat_template(processor, "gemma-3")
 
-    model = FastVisionModel.for_training(model)
+    # model = FastVisionModel.for_training(model)
+    model = FastVisionModel.get_peft_model(
+        model,
+        finetune_vision_layers=True,  # False if not finetuning vision layers
+        finetune_language_layers=True,  # False if not finetuning language layers
+        finetune_attention_modules=True,  # False if not finetuning attention layers
+        finetune_mlp_modules=True,  # False if not finetuning MLP layers
+        r=16,  # The larger, the higher the accuracy, but might overfit
+        lora_alpha=16,  # Recommended alpha == r at least
+        lora_dropout=0,
+        bias="none",
+        random_state=3407,
+        use_rslora=False,  # We support rank stabilized LoRA
+        loftq_config=None,  # And LoftQ
+        target_modules="all-linear",  # Optional now! Can specify a list if needed
+        modules_to_save=[
+            "lm_head",
+            "embed_tokens",
+        ],
+    )
     print("model set for training!")
 
     trainer = SFTTrainer(
@@ -99,7 +119,7 @@ def main():
             max_grad_norm=0.3,  # max gradient norm based on QLoRA paper
             warmup_ratio=0.03,
             max_steps=30,
-            fp16=False,  # Use mixed precision
+            fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
             learning_rate=2e-6,
             logging_steps=1,
@@ -122,7 +142,11 @@ def main():
     # print(trainer.model.print_trainable_parameters())
     trainer_stats = trainer.train()
     print(trainer_stats)
-
+    model.save_pretrained_merged(
+        "merged_model",
+        processor.tokenizer,
+        save_method="merged_16bit",  # or "merged_4bit" for smaller size
+    )
 
 if __name__ == "__main__":
     main()
