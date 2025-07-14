@@ -13,10 +13,10 @@ load_dotenv()
 client = OpenAI(
     # api_key=os.environ.get("OPENAI_API_KEY"),
     # base_url="http://127.0.0.1:2600/v1",
-    base_url="http://ai-a100-01.r-ccs27.riken.jp:11434/v1",
+    # base_url="http://ai-a100-01.r-ccs27.riken.jp:11434/v1",
 )
-# MODEL = "gpt-4.1"  # Or another suitable multimodal model
-MODEL = "gemma3:12b"
+MODEL = "gpt-4.1"  # Or another suitable multimodal model
+# MODEL = "gemma3:4b"
 
 
 def encode_image(image_path):
@@ -72,7 +72,8 @@ if __name__ == "__main__":
     # path_in = "./cropped/seta.png"  # Replace with the actual path to your image
     path_dst = Path("recognized") / MODEL.replace(":", "_")
     path_dst.mkdir(exist_ok=True, parents=True)
-    for path_in in Path("./cropped").iterdir():
+    cnt_val_samples = 10
+    for path_in in list(sorted(Path("./cropped").iterdir()))[:cnt_val_samples]:
         print("\n## processing file", path_in)
         recognized_text = recognize_japanese_text_with_furigana(path_in)
         path_out = path_dst / path_in.with_suffix(".md").name
