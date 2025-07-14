@@ -8,6 +8,7 @@
 from pathlib import Path
 
 from datasets import load_dataset
+from genericpath import exists
 
 
 def download_fineweb_subset(num_entries=100):
@@ -59,4 +60,5 @@ def download_fineweb_subset(num_entries=100):
 
 
 if __name__ == "__main__":
+    Path("inputs").mkdir(exist_ok=True)
     download_fineweb_subset(100)

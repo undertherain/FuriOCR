@@ -32,7 +32,7 @@ kakasiArgs = ["-isjis", "-osjis", "-u", "-JH", "-KH"]
 mecabArgs = ["--node-format=%m[%f[7]] ", "--eos-format=\n", "--unk-format=%m[] "]
 
 cnt_chars_processed = 0
-max_characters = 3000
+max_characters = 2000
 
 
 def flip_coin(p=0.5):
