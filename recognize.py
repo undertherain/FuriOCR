@@ -16,8 +16,8 @@ client = OpenAI(
     base_url="http://ai-a100-01.r-ccs27.riken.jp:11434/v1",
 )
 # MODEL = "gpt-4.1"  # Or another suitable multimodal model
-MODEL = "gemma3:4b"
-# MODEL = "furi"
+# MODEL = "gemma3:4b"
+MODEL = "furi"
 
 
 def encode_image(image_path):
