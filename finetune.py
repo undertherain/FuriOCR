@@ -61,8 +61,10 @@ def main():
     # For axolotl, keep image paths
     # for unsloth, load PIL image
     # cnt_val_samples
+    converted_dataset = []
     for path_in in list(sorted(Path("./cropped").iterdir())):  # [:cnt_val_samples]
-        converted_dataset = [create_conversation(path_in) for i in range(100)]
+        converted_dataset.append(create_conversation(path_in))
+        # = [ for i in range(100)]
     # converted_dataset = [convert_to_conversation(sample) for sample in dataset]
 
     print(converted_dataset[0])
