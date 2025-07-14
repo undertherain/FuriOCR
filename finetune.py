@@ -122,7 +122,7 @@ def main():
             gradient_checkpointing_kwargs={"use_reentrant": False},
             max_grad_norm=0.3,  # max gradient norm based on QLoRA paper
             warmup_ratio=0.03,
-            max_steps=1000,
+            max_steps=500,
             fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
             learning_rate=2e-6,
@@ -139,7 +139,7 @@ def main():
             remove_unused_columns=False,
             dataset_text_field="",
             dataset_kwargs={"skip_prepare_dataset": True},
-            max_seq_length=4096,
+            max_seq_length=16384,
         ),
     )
     # print("just in case check trainable params again:")
