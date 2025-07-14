@@ -14,17 +14,17 @@ from unsloth.trainer import UnslothVisionDataCollator
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
-def create_conversation():
+def create_conversation(path_in):
     user_message = {
         "role": "user",
         "content": [
             {
                 "type": "image",
-                "image": Image.open("./cat.jpg"),
+                "image": Image.open(path_in),
             },
             {
                 "type": "text",
-                "text": "Recognize the main object in this image. Respond with one word.",
+                "text": "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text.\n",
             },
         ],
     }
@@ -60,7 +60,9 @@ def main():
 
     # For axolotl, keep image paths
     # for unsloth, load PIL image
-    converted_dataset = [create_conversation() for i in range(100)]
+    # cnt_val_samples
+    for path_in in list(sorted(Path("./cropped").iterdir())):  # [:cnt_val_samples]
+        converted_dataset = [create_conversation(path_in) for i in range(100)]
     # converted_dataset = [convert_to_conversation(sample) for sample in dataset]
 
     print(converted_dataset[0])
@@ -147,6 +149,7 @@ def main():
         processor.tokenizer,
         save_method="merged_16bit",  # or "merged_4bit" for smaller size
     )
+
 
 if __name__ == "__main__":
     main()
