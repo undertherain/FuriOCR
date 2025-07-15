@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
 # Automatic reading generation with kakasi and mecab.
-# Written by Aleksandr Drozd, used some code from Anki Japanese support addon
+# Written by ____ used some code from Anki Japanese support addon
 
 import logging
 import os

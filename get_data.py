@@ -61,4 +61,4 @@ def download_fineweb_subset(num_entries=100):
 
 if __name__ == "__main__":
     Path("inputs").mkdir(exist_ok=True)
-    download_fineweb_subset(1010)
+    download_fineweb_subset(4010)
