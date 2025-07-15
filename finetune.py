@@ -71,7 +71,7 @@ def main():
 
     # return
     # model_name = "unsloth/Meta-Llama-3.1-8B-bnb-4bit"
-    model_name = "unsloth/gemma-3-4b-it"
+    model_name = "unsloth/gemma-3-12b-it"
     # model_name = "unsloth/Llama-3.2-1B-Instruct"
     model, processor = FastVisionModel.from_pretrained(
         model_name=model_name,
