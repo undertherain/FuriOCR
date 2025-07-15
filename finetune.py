@@ -15,22 +15,27 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def create_conversation(path_in):
-    user_message = {
-        "role": "user",
-        "content": [
-            {
-                "type": "image",
-                "image": Image.open(path_in),
-            },
-            {
-                "type": "text",
-                "text": "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text.",
-            },
-        ],
-    }
+    with Image.open(path_in) as img:
+        # By creating a copy, you load the image data into memory
+        # and the 'with' statement will then safely close the file.
+        image_copy = img.copy()
+        user_message = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "image": image_copy,
+                },
+                {
+                    "type": "text",
+                    "text": "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text.",
+                },
+            ],
+        }
+    transcript = Path("./furiganized") / Path(path_in).with_suffix(".md").name
     assistant_message = {
         "role": "assistant",
-        "content": [{"type": "text", "text": "cat"}],
+        "content": [{"type": "text", "text": transcript}],
     }
     conversation = {"messages": [user_message, assistant_message]}
     return conversation
@@ -73,6 +78,7 @@ def main():
     # model_name = "unsloth/Meta-Llama-3.1-8B-bnb-4bit"
     model_name = "unsloth/gemma-3-12b-it"
     # model_name = "unsloth/Llama-3.2-1B-Instruct"
+    # model_name = "./merged_model"
     model, processor = FastVisionModel.from_pretrained(
         model_name=model_name,
         dtype=torch.float16,  # Use float16 for memory efficiency
@@ -81,6 +87,7 @@ def main():
         # full_finetuning=True,
         use_gradient_checkpointing="unsloth",
         max_seq_length=16384,
+        # attn_implementation="flash_attention_2",
     )
     print("model loaded!")
     print("processor:", type(processor))
@@ -101,10 +108,11 @@ def main():
         use_rslora=False,  # We support rank stabilized LoRA
         loftq_config=None,  # And LoftQ
         target_modules="all-linear",  # Optional now! Can specify a list if needed
-        modules_to_save=[
-            "lm_head",
-            "embed_tokens",
-        ],
+        # target_modules=["q_proj", "k_proj", "v_proj", "up_proj", "down_proj", "o_proj", "gate_proj"],
+        # modules_to_save=[
+        #     "lm_head",
+        #     "embed_tokens",
+        # ],
     )
     print("model set for training!")
 
@@ -121,7 +129,7 @@ def main():
             gradient_checkpointing_kwargs={"use_reentrant": False},
             max_grad_norm=0.3,  # max gradient norm based on QLoRA paper
             warmup_ratio=0.03,
-            max_steps=10,
+            max_steps=1000,
             fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
             learning_rate=2e-6,
@@ -151,6 +159,7 @@ def main():
         processor.tokenizer,
         save_method="merged_16bit",  # or "merged_4bit" for smaller size
     )
+
 
 if __name__ == "__main__":
     main()

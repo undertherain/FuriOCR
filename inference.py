@@ -1,8 +1,9 @@
-import torch
-from unsloth import FastVisionModel
-from PIL import Image
 from pathlib import Path
+
+import torch
+from PIL import Image
 from transformers import TextStreamer
+from unsloth import FastVisionModel
 
 # 1. Configuration
 # -----------------
@@ -19,22 +20,25 @@ prompt = "Recognize all the Japanese text in this image. For any kanji that has 
 # Load the fine-tuned model and tokenizer from the specified path.
 # We're using load_in_4bit=True for memory efficiency.
 try:
-    model, tokenizer = FastVisionModel.from_pretrained(
+    model, processor = FastVisionModel.from_pretrained(
         model_name=model_path,
         dtype=None,
         load_in_4bit=True,
     )
 except Exception as e:
     print(f"Error loading the model: {e}")
-    print("Please ensure the 'model_path' is correct and points to a valid Unsloth model directory.")
+    print(
+        "Please ensure the 'model_path' is correct and points to a valid Unsloth model directory."
+    )
     exit()
 
 # Enable fast inference mode.
+print("processor:", type(processor))
 FastVisionModel.for_inference(model)
 
 output_folder = Path("recognized_sloth")
 output_folder.mkdir(exist_ok=True)
-cnt_val_samples=10
+cnt_val_samples = 10
 for image_path in list(sorted(Path("./cropped").iterdir()))[:cnt_val_samples]:
     print("\n## processing file", image_path)
     # print(f"\nProcessing image: {image_path.name}")
@@ -52,21 +56,24 @@ for image_path in list(sorted(Path("./cropped").iterdir()))[:cnt_val_samples]:
         }
     ]
 
-    input_text = tokenizer.apply_chat_template(
+    input_text = processor.apply_chat_template(
         messages,
         tokenize=False,
         add_generation_prompt=True,
     )
 
     # Tokenize the image and text prompt together.
-    inputs = tokenizer(
-        [image],
-        [input_text],
+    inputs = processor(
+        images=[image],
+        text=[input_text],
         return_tensors="pt",
     ).to("cuda")
 
     # Use a text streamer for cleaner output.
-    text_streamer = TextStreamer(tokenizer, skip_prompt=True, )
+    text_streamer = TextStreamer(
+        processor,
+        skip_prompt=True,
+    )
 
     # Generate the response from the model.
     outputs = model.generate(
@@ -74,15 +81,18 @@ for image_path in list(sorted(Path("./cropped").iterdir()))[:cnt_val_samples]:
         # streamer=text_streamer,
         max_new_tokens=8192,
         use_cache=True,
-        temperature=1,
+        temperature=0.1,
     )
-    decoded_output = tokenizer.batch_decode(outputs[:, inputs.input_ids.shape[1]:], skip_special_tokens=True)[0]
+    decoded_output = processor.batch_decode(
+        outputs[:, inputs.input_ids.shape[1] :], skip_special_tokens=True
+    )[0]
 
     # Define the output file path.
     output_filename = f"{image_path.stem}.md"
     output_file_path = output_folder / output_filename
 
     # Save the decoded text to the file.
+    print(decoded_output)
     output_file_path.write_text(decoded_output.strip())
 
 
