@@ -11,7 +11,7 @@ model_path = "merged_model"
 # Set the path to the folder containing your images.
 image_folder_path = "cropped"
 # The prompt to be used for each image.
-prompt = "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text.\n"
+prompt = "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text."
 
 
 # 2. Load Model and Tokenizer
@@ -32,70 +32,58 @@ except Exception as e:
 # Enable fast inference mode.
 FastVisionModel.for_inference(model)
 
+output_folder = Path("recognized_sloth")
+output_folder.mkdir(exist_ok=True)
+cnt_val_samples=10
+for image_path in list(sorted(Path("./cropped").iterdir()))[:cnt_val_samples]:
+    print("\n## processing file", image_path)
+    # print(f"\nProcessing image: {image_path.name}")
+    # print("-" * 30)
 
-# 3. Prepare Image and Prompt
-# ---------------------------
-# Get a list of all image files in the specified folder.
-# This supports common image formats.
-image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif']
-try:
-    image_paths = [p for p in Path(image_folder_path).glob('**/*') if p.suffix.lower() in image_extensions]
-    if not image_paths:
-        print(f"No images found in the directory: {image_folder_path}")
-        exit()
-except FileNotFoundError:
-    print(f"The image directory was not found: {image_folder_path}")
-    exit()
+    image = Image.open(image_path)
 
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "image"},
+                {"type": "text", "text": prompt},
+            ],
+        }
+    ]
 
-# 4. Perform Inference
-# --------------------
-for image_path in image_paths:
-    try:
-        print(f"\nProcessing image: {image_path.name}")
-        print("-" * 30)
+    input_text = tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True,
+    )
 
-        # Open the image file.
-        image = Image.open(image_path)
+    # Tokenize the image and text prompt together.
+    inputs = tokenizer(
+        [image],
+        [input_text],
+        return_tensors="pt",
+    ).to("cuda")
 
-        # Format the prompt for the model.
-        # The chat template expects a list of messages.
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image"},
-                    {"type": "text", "text": prompt},
-                ],
-            }
-        ]
+    # Use a text streamer for cleaner output.
+    text_streamer = TextStreamer(tokenizer, skip_prompt=True, )
 
-        # Apply the chat template to format the input.
-        input_text = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
+    # Generate the response from the model.
+    outputs = model.generate(
+        **inputs,
+        # streamer=text_streamer,
+        max_new_tokens=8192,
+        use_cache=True,
+        temperature=1,
+    )
+    decoded_output = tokenizer.batch_decode(outputs[:, inputs.input_ids.shape[1]:], skip_special_tokens=True)[0]
 
-        # Tokenize the image and text prompt together.
-        inputs = tokenizer(
-            [image],
-            [input_text],
-            return_tensors="pt",
-        ).to("cuda")
+    # Define the output file path.
+    output_filename = f"{image_path.stem}.md"
+    output_file_path = output_folder / output_filename
 
-        # Use a text streamer for cleaner output.
-        text_streamer = TextStreamer(tokenizer, skip_prompt=True)
+    # Save the decoded text to the file.
+    output_file_path.write_text(decoded_output.strip())
 
-        # Generate the response from the model.
-        _ = model.generate(
-            **inputs,
-            streamer=text_streamer,
-            max_new_tokens=128,
-            use_cache=True,
-        )
-
-    except Exception as e:
-        print(f"Could not process image {image_path.name}. Error: {e}")
 
 print("\nInference complete.")

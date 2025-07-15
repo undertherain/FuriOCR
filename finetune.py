@@ -24,7 +24,7 @@ def create_conversation(path_in):
             },
             {
                 "type": "text",
-                "text": "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text.\n",
+                "text": "Recognize all the Japanese text in this image. For any kanji that has furigana above it, please format it in Markdown as `[漢字]{かんじ}`. Present the entire recognized text in this Markdown format. Return only the recognized text.",
             },
         ],
     }
@@ -77,16 +77,13 @@ def main():
         model_name=model_name,
         dtype=torch.float16,  # Use float16 for memory efficiency
         load_in_4bit=False,  # Use 4bit to reduce memory use. False for 16bit LoRA.
-        load_in_8bit=True,
+        load_in_8bit=False,
         # full_finetuning=True,
         use_gradient_checkpointing="unsloth",
-        use_fast=True,
-        # use_gradient_checkpointing="unsloth",  # True or "unsloth" for long context
-        # r=16,  # Add LoRA rank
-        # lora_alpha=32,  # Add LoRA alpha
+        max_seq_length=16384,
     )
     print("model loaded!")
-    print("processor:", processor)
+    print("processor:", type(processor))
     processor = get_chat_template(processor, "gemma-3")
 
     # model = FastVisionModel.for_training(model)
@@ -124,7 +121,7 @@ def main():
             gradient_checkpointing_kwargs={"use_reentrant": False},
             max_grad_norm=0.3,  # max gradient norm based on QLoRA paper
             warmup_ratio=0.03,
-            max_steps=500,
+            max_steps=10,
             fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
             learning_rate=2e-6,
@@ -148,12 +145,12 @@ def main():
     # print(trainer.model.print_trainable_parameters())
     trainer_stats = trainer.train()
     print(trainer_stats)
+    processor.save_pretrained("merged_model")
     model.save_pretrained_merged(
         "merged_model",
         processor.tokenizer,
         save_method="merged_16bit",  # or "merged_4bit" for smaller size
     )
-
 
 if __name__ == "__main__":
     main()
