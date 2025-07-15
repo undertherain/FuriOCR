@@ -80,6 +80,7 @@ def main():
         load_in_8bit=True,
         # full_finetuning=True,
         use_gradient_checkpointing="unsloth",
+        use_fast=True,
         # use_gradient_checkpointing="unsloth",  # True or "unsloth" for long context
         # r=16,  # Add LoRA rank
         # lora_alpha=32,  # Add LoRA alpha
