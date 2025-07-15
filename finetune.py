@@ -1,3 +1,4 @@
+import datetime
 import gc
 import os
 from pathlib import Path
@@ -92,7 +93,7 @@ def main():
     print("model loaded!")
     print("processor:", type(processor))
     processor = get_chat_template(processor, "gemma-3")
-
+    lora_rank = 32
     # model = FastVisionModel.for_training(model)
     model = FastVisionModel.get_peft_model(
         model,
@@ -100,8 +101,8 @@ def main():
         finetune_language_layers=True,  # False if not finetuning language layers
         finetune_attention_modules=True,  # False if not finetuning attention layers
         finetune_mlp_modules=True,  # False if not finetuning MLP layers
-        r=16,  # The larger, the higher the accuracy, but might overfit
-        lora_alpha=16,  # Recommended alpha == r at least
+        r=lora_rank,  # The larger, the higher the accuracy, but might overfit
+        lora_alpha=lora_rank,  # Recommended alpha == r at least
         lora_dropout=0,
         bias="none",
         random_state=3407,
@@ -129,7 +130,7 @@ def main():
             gradient_checkpointing_kwargs={"use_reentrant": False},
             max_grad_norm=0.3,  # max gradient norm based on QLoRA paper
             warmup_ratio=0.03,
-            max_steps=1000,
+            max_steps=2000,
             fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
             learning_rate=2e-6,
@@ -141,8 +142,7 @@ def main():
             lr_scheduler_type="cosine",
             seed=3407,
             output_dir="outputs",
-            report_to="none",  # For Weights and Biases
-            # You MUST put the below items for vision finetuning:
+            report_to="wandb",  # You MUST put the below items for vision finetuning:
             remove_unused_columns=False,
             dataset_text_field="",
             dataset_kwargs={"skip_prepare_dataset": True},
@@ -153,9 +153,12 @@ def main():
     # print(trainer.model.print_trainable_parameters())
     trainer_stats = trainer.train()
     print(trainer_stats)
-    processor.save_pretrained("merged_model")
+    d = datetime.datetime.now()
+    s = d.strftime("%y.%m.%d_%H.%M.%S")
+    dst_path = f"{model_name}_R{lora_rank}_{s}_merged"
+    processor.save_pretrained(dst_path)
     model.save_pretrained_merged(
-        "merged_model",
+        dst_path,
         processor.tokenizer,
         save_method="merged_16bit",  # or "merged_4bit" for smaller size
     )
