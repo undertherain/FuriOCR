@@ -85,6 +85,7 @@ def main():
         # lora_alpha=32,  # Add LoRA alpha
     )
     print("model loaded!")
+    print("processor:", processor)
     processor = get_chat_template(processor, "gemma-3")
 
     # model = FastVisionModel.for_training(model)
