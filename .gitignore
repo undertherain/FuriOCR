@@ -5,6 +5,7 @@ inputs
 htmls
 recognized
 unsloth_compiled_cache
+last_run_prepared
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
