@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import torch
@@ -8,7 +9,9 @@ from unsloth import FastVisionModel
 # 1. Configuration
 # -----------------
 # Set the path to your saved Unsloth vision model directory.
-model_path = "merged_model"
+model_path = sys.argv[1]
+output_folder = Path("recognized_sloth") / Path(model_path).stem
+output_folder.mkdir(exist_ok=True)
 # Set the path to the folder containing your images.
 image_folder_path = "cropped"
 # The prompt to be used for each image.
@@ -36,8 +39,6 @@ except Exception as e:
 print("processor:", type(processor))
 FastVisionModel.for_inference(model)
 
-output_folder = Path("recognized_sloth")
-output_folder.mkdir(exist_ok=True)
 cnt_val_samples = 10
 for image_path in list(sorted(Path("./cropped").iterdir()))[:cnt_val_samples]:
     print("\n## processing file", image_path)

@@ -116,6 +116,9 @@ def main():
         # ],
     )
     print("model set for training!")
+    d = datetime.datetime.now()
+    s = d.strftime("%y.%m.%d_%H.%M.%S")
+    dst_path = f"{model_name}_R{lora_rank}_{s}"
 
     trainer = SFTTrainer(
         model=model,
@@ -133,15 +136,16 @@ def main():
             max_steps=2000,
             fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
-            learning_rate=2e-6,
+            learning_rate=2e-5,
             logging_steps=2,
             save_strategy="steps",
+            save_steps=200,
             save_safetensors=False,
             optim="adamw_torch_fused",
             weight_decay=0.01,
             lr_scheduler_type="cosine",
             seed=3407,
-            output_dir="outputs",
+            output_dir=dst_path,
             report_to="wandb",  # You MUST put the below items for vision finetuning:
             remove_unused_columns=False,
             dataset_text_field="",
@@ -153,9 +157,6 @@ def main():
     # print(trainer.model.print_trainable_parameters())
     trainer_stats = trainer.train()
     print(trainer_stats)
-    d = datetime.datetime.now()
-    s = d.strftime("%y.%m.%d_%H.%M.%S")
-    dst_path = f"{model_name}_R{lora_rank}_{s}_merged"
     processor.save_pretrained(dst_path)
     model.save_pretrained_merged(
         dst_path,
