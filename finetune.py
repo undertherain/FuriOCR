@@ -3,14 +3,16 @@ import gc
 import os
 from pathlib import Path
 
-import torch
 import unsloth
-from datasets import load_dataset
+import torch
+
+# from datasets import load_dataset
 from PIL import Image
 from trl import SFTConfig, SFTTrainer
+from unsloth.trainer import UnslothVisionDataCollator
+
 from unsloth import FastVisionModel  # FastLanguageModel for LLMs
 from unsloth import get_chat_template
-from unsloth.trainer import UnslothVisionDataCollator
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -33,7 +35,9 @@ def create_conversation(path_in):
                 },
             ],
         }
-    transcript = Path("./furiganized") / Path(path_in).with_suffix(".md").name
+    file_transcript = Path("./furiganized") / Path(path_in).with_suffix(".md").name
+    with open(file_transcript) as f:
+        transcript = f.read()
     assistant_message = {
         "role": "assistant",
         "content": [{"type": "text", "text": transcript}],
@@ -93,7 +97,7 @@ def main():
     print("model loaded!")
     print("processor:", type(processor))
     processor = get_chat_template(processor, "gemma-3")
-    lora_rank = 32
+    lora_rank = 16
     # model = FastVisionModel.for_training(model)
     model = FastVisionModel.get_peft_model(
         model,
@@ -103,7 +107,7 @@ def main():
         finetune_mlp_modules=True,  # False if not finetuning MLP layers
         r=lora_rank,  # The larger, the higher the accuracy, but might overfit
         lora_alpha=lora_rank,  # Recommended alpha == r at least
-        lora_dropout=0,
+        lora_dropout=0.01,
         bias="none",
         random_state=3407,
         use_rslora=False,  # We support rank stabilized LoRA
@@ -119,24 +123,25 @@ def main():
     d = datetime.datetime.now()
     s = d.strftime("%y.%m.%d_%H.%M.%S")
     dst_path = f"{model_name}_R{lora_rank}_{s}"
-
+    print("dst path", dst_path)
+    Path(dst_path).mkdir(exist_ok=True, parents=True)
     trainer = SFTTrainer(
         model=model,
         train_dataset=converted_dataset,
         processing_class=processor.tokenizer,
         data_collator=UnslothVisionDataCollator(model, processor),
         args=SFTConfig(
-            per_device_train_batch_size=1,
+            per_device_train_batch_size=2,
             gradient_accumulation_steps=4,
             gradient_checkpointing=True,
             # use reentrant checkpointing
             gradient_checkpointing_kwargs={"use_reentrant": False},
             max_grad_norm=0.3,  # max gradient norm based on QLoRA paper
             warmup_ratio=0.03,
-            max_steps=2000,
+            max_steps=200,
             fp16=True,  # Use mixed precision
             # num_train_epochs = 2,          # Set this instead of max_steps for full training runs
-            learning_rate=2e-5,
+            learning_rate=1e-5,
             logging_steps=2,
             save_strategy="steps",
             save_steps=200,

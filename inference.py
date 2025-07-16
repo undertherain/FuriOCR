@@ -12,7 +12,7 @@ from unsloth import FastVisionModel
 # -----------------
 # Set the path to your saved Unsloth vision model directory.
 model_path = sys.argv[1]
-temperature = 1
+temperature = 0.8
 d = datetime.datetime.now()
 s = d.strftime("%y.%m.%d_%H.%M.%S")
 
