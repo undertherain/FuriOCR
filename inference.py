@@ -1,17 +1,26 @@
+import datetime
 import sys
 from pathlib import Path
 
 import torch
 from PIL import Image
 from transformers import TextStreamer
+
 from unsloth import FastVisionModel
 
 # 1. Configuration
 # -----------------
 # Set the path to your saved Unsloth vision model directory.
 model_path = sys.argv[1]
-output_folder = Path("recognized_sloth") / Path(model_path).stem
-output_folder.mkdir(exist_ok=True)
+temperature = 1
+d = datetime.datetime.now()
+s = d.strftime("%y.%m.%d_%H.%M.%S")
+
+output_folder = (
+    Path("recognized_sloth") / Path(model_path).name / f"T_{temperature}" / s
+)
+
+output_folder.mkdir(exist_ok=True, parents=True)
 # Set the path to the folder containing your images.
 image_folder_path = "cropped"
 # The prompt to be used for each image.
@@ -82,7 +91,7 @@ for image_path in list(sorted(Path("./cropped").iterdir()))[:cnt_val_samples]:
         # streamer=text_streamer,
         max_new_tokens=8192,
         use_cache=True,
-        temperature=0.1,
+        temperature=temperature,
     )
     decoded_output = processor.batch_decode(
         outputs[:, inputs.input_ids.shape[1] :], skip_special_tokens=True
