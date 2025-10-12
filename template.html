@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furigana Document</title>
+    <style>
+        body {
+            /* --- CHANGES --- */
+            font-size: 44px; /* Increased base font size */
+            line-height: 2.5; /* Adjusted line height for readability */
+            /* --------------- */
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        /* --- ADDED FOR BETTER FURIGANA --- */
+        rt {市し販はんされているお菓か子しと飲のみ物ものはベビー麦茶です。
+            font-size: 0.5em; /* Makes furigana half the size of the base text */
+            opacity: 0.9;
+        }
+        /* ---------------------------------- */
+    </style>
+</head>
+<body>
+    <div class="content">
+        {{content}}
+    </div>
+</body>
+</html>
